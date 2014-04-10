@@ -393,7 +393,7 @@ void NoiseGen::mainLoop()
         {
             mapDrag = false;
             xpos = xpos - (sf::Mouse::getPosition(*screen).x - mapDragOffset.x);
-            ypos = ypos + sf::Mouse::getPosition(*screen).y - mapDragOffset.y;
+            ypos = ypos - (sf::Mouse::getPosition(*screen).y - mapDragOffset.y);
 
             refresh = true;
         }
@@ -407,7 +407,7 @@ void NoiseGen::mainLoop()
                 int x_off = sf::Mouse::getPosition(*screen).x - mapDragOffset.x;
                 int y_off = sf::Mouse::getPosition(*screen).y - mapDragOffset.y;
 
-                createMapImage(xpos - x_off, ypos + y_off);
+                createMapImage(xpos - x_off, ypos - y_off);
 
             }
             else createMapImage(xpos, ypos);
