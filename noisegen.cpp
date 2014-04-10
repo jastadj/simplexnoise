@@ -22,6 +22,7 @@ NoiseGen::NoiseGen()
     screen->setIcon(sfml_icon.width, sfml_icon.height, sfml_icon.pixel_data);
     mapTexture = new sf::RenderTexture;
     mapTexture->create(IMAGE_SCALE*IMAGE_SIZE, IMAGE_SCALE*IMAGE_SIZE);
+    mapTexture->display();
 
     //load font
     font.loadFromFile("font.ttf");
@@ -339,7 +340,7 @@ void NoiseGen::exportToTXT()
             else if(N_MODE == PERLIN) height_map[i][n] = getNoise(octaves, persistence, zoom, n + xpos, i + ypos);
 
             if(n == IMAGE_SIZE-1) ofile << height_map[i][n] << std::endl;
-            ofile << height_map[i][n] << ",";
+            else ofile << height_map[i][n] << ",";
 
         }
     }
