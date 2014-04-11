@@ -518,7 +518,7 @@ void NoiseGen::mainLoop()
                 {
                     quit = true;
                 }
-                else if(event.key.code == sf::Keyboard::D)
+                else if(event.key.code == sf::Keyboard::Q)
                 {
                     /*
                     defaultSettings();
@@ -541,6 +541,10 @@ void NoiseGen::mainLoop()
 
                     terSlider->addSegment(&newseg);
                 }
+                else if(event.key.code == sf::Keyboard::W) {ypos--; refresh = true;}
+                else if(event.key.code == sf::Keyboard::S) {ypos++; refresh = true;}
+                else if(event.key.code == sf::Keyboard::A) {xpos--; refresh = true;}
+                else if(event.key.code == sf::Keyboard::D) {xpos++; refresh = true;}
 
 
             }
@@ -577,7 +581,7 @@ void NoiseGen::createMapImage(int nx, int ny)
         {
 
             //note , the zoom factor for simplex differs from perlin, perlin > value zooms in, simplex < value zooms in
-            if(N_MODE == SIMPLEX && !terrainmode) drawPixel(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,zoom,0,255,n + nx,i + ny), IMAGE_SCALE);
+            if(N_MODE == SIMPLEX && !terrainmode) drawPixel(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,zoom,0,255,n + nx,i + ny) , IMAGE_SCALE);
             else if(N_MODE == SIMPLEX && terrainmode) drawPixelTerrain(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,zoom,0,255,n + nx,i + ny), IMAGE_SCALE);
             else if(N_MODE == PERLIN && !terrainmode) drawPixel(mapTexture, n, i, getNoise(octaves, persistence, zoom, n + nx, i + ny), IMAGE_SCALE);
             else if(N_MODE == PERLIN && terrainmode) drawPixelTerrain(mapTexture, n, i, getNoise(octaves, persistence, zoom, n + nx, i + ny), IMAGE_SCALE);
@@ -640,12 +644,20 @@ void NoiseGen::drawMask()
 void NoiseGen::drawCoordinates(sf::Vector2i ncoord)
 {
     std::stringstream coordS;
+    std::stringstream coordE;
     coordS << "[ X:" << xpos << ", Y:" << ypos << " ]";
+    //coordE << "[ X:" << xpos + IMAGE_SIZE - 1 << ", Y:" << ypos + IMAGE_SIZE - 1 << "]";
+    coordE << "[ X:" << xpos*zoom << ", Y:" << ypos*zoom << "]";
+
 
     sf::Text coordt(coordS.str(), font, 12);
     coordt.setPosition( ncoord.x, ncoord.y);
 
+    sf::Text coordt2(coordE.str(), font, 12);
+    coordt2.setPosition( ncoord.x, ncoord.y+14);
+
     screen->draw(coordt);
+    screen->draw(coordt2);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -656,6 +668,7 @@ void NoiseGen::initSliders()
     //create sliders
 
     //octave slider
+    //0
     Slider *nslider = new Slider(screen, 1, 16, 100, &octaves);
     nslider->setCenter( sf::Vector2f(IMAGE_SCALE*IMAGE_SIZE + RIGHT_MARGIN_WIDTH/2,25));
     nslider->setRounding(true);
@@ -663,12 +676,16 @@ void NoiseGen::initSliders()
     nslider->setRealtime(true);
     sliders.push_back(nslider);
 
+    //zoom slider
+    //1
     nslider = new Slider(screen, 0, 0.015, 100, &zoom);
     nslider->setCenter( sf::Vector2f(IMAGE_SCALE*IMAGE_SIZE + RIGHT_MARGIN_WIDTH/2,65));
     nslider->setName("ZOOM");
     nslider->setRealtime(true);
     sliders.push_back(nslider);
 
+    //persistence slider
+    //2
     nslider = new Slider(screen, 0, 2, 100, &persistence);
     nslider->setCenter( sf::Vector2f(IMAGE_SCALE*IMAGE_SIZE + RIGHT_MARGIN_WIDTH/2,105));
     nslider->setName("PERSISTENCE");
@@ -707,9 +724,19 @@ bool NoiseGen::updateSliders(sf::Event *event)
 {
     bool need_update = false;
 
+    //check all sliders for update
     for(int i = 0; i < int(sliders.size()); i++)
     {
-        if(sliders[i]->update(event)) need_update = true;
+        if(sliders[i]->update(event))
+        {
+            need_update = true;
+            //if zoom has changed, recalc position
+            if(i == 1)
+            {
+
+            }
+
+        }
     }
 
     //if an update is not currently needed, check terrain slider too
