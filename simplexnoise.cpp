@@ -52,7 +52,8 @@ all look identical.
 // The higher the persistence [0-1], the more of each succeeding octave will be added.
 float octave_noise_2d( const float octaves, const float persistence, const float scale, const float x, const float y ) {
     float total = 0;
-    float frequency = scale;
+    //float frequency = scale;
+    float frequency = scale/1000; // this was changed to make scale param more manageable
     float amplitude = 1;
 
     // We have to keep track of the largest possible amplitude,

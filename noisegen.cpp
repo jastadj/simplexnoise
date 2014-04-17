@@ -92,7 +92,7 @@ void NoiseGen::loadSettings()
         else if(cmd == "IMAGE_SCALE") IMAGE_SCALE = atoi(param.c_str());
         else if(cmd == "PERSISTENCE") persistence = atof(param.c_str());
         else if(cmd == "OCTAVES") octaves = atoi(param.c_str());
-        else if(cmd == "ZOOM") zoom = atof(param.c_str());
+        else if(cmd == "SCALE") scale = atof(param.c_str());
         else if(cmd == "X_POS") xpos = atoi(param.c_str());
         else if(cmd == "Y_POS") ypos = atoi(param.c_str());
         else if(cmd == "NOISE_MODE")
@@ -165,7 +165,7 @@ void NoiseGen::saveSettings()
     sfile << "IMAGE_SIZE:" << IMAGE_SIZE << std::endl;
     sfile << "IMAGE_SCALE:" << IMAGE_SCALE << std::endl;
     sfile << std::endl << "PERSISTENCE:" << persistence << std::endl;
-    sfile << "ZOOM:" << zoom << std::endl;
+    sfile << "SCALE:" << scale << std::endl;
     sfile << "OCTAVES:" << octaves << std::endl;
     sfile << "X_POS:" << xpos << std::endl;
     sfile << "Y_POS:" << ypos << std::endl;
@@ -200,7 +200,7 @@ void NoiseGen::saveSettings()
 void NoiseGen::defaultSettings()
 {
     persistence = 0.7;
-    zoom = 0.005;
+    scale = 7;
     octaves = 6;
     xpos = 0;
     ypos = 0;
@@ -336,8 +336,8 @@ void NoiseGen::exportToTXT()
         for(int n = 0; n < IMAGE_SIZE; n++)
         {
             //these were copied and modified from the createmap function
-            if(N_MODE == SIMPLEX) height_map[i][n] = scaled_octave_noise_2d(octaves,persistence,zoom,0,255,n + xpos,i + ypos);
-            else if(N_MODE == PERLIN) height_map[i][n] = getNoise(octaves, persistence, zoom, n + xpos, i + ypos);
+            if(N_MODE == SIMPLEX) height_map[i][n] = scaled_octave_noise_2d(octaves,persistence,scale,0,255,n + xpos,i + ypos);
+            else if(N_MODE == PERLIN) height_map[i][n] = getNoise(octaves, persistence, scale, n + xpos, i + ypos);
 
             if(n == IMAGE_SIZE-1) ofile << height_map[i][n] << std::endl;
             else ofile << height_map[i][n] << ",";
@@ -541,10 +541,16 @@ void NoiseGen::mainLoop()
 
                     terSlider->addSegment(&newseg);
                 }
-                else if(event.key.code == sf::Keyboard::W) {ypos--; refresh = true;}
-                else if(event.key.code == sf::Keyboard::S) {ypos++; refresh = true;}
-                else if(event.key.code == sf::Keyboard::A) {xpos--; refresh = true;}
-                else if(event.key.code == sf::Keyboard::D) {xpos++; refresh = true;}
+                else if(event.key.code == sf::Keyboard::F5)
+                {
+                    xpos = 10;
+                    ypos = 10;
+                    refresh = true;
+                }
+                else if(event.key.code == sf::Keyboard::W) {ypos = ypos - IMAGE_SIZE/2; refresh = true;}
+                else if(event.key.code == sf::Keyboard::S) {ypos = ypos + IMAGE_SIZE/2; refresh = true;}
+                else if(event.key.code == sf::Keyboard::A) {xpos = xpos - IMAGE_SIZE/2; refresh = true;}
+                else if(event.key.code == sf::Keyboard::D) {xpos = xpos + IMAGE_SIZE/2; refresh = true;}
 
 
             }
@@ -580,13 +586,14 @@ void NoiseGen::createMapImage(int nx, int ny)
         for(int n = 0; n < IMAGE_SIZE; n++)
         {
 
-            //note , the zoom factor for simplex differs from perlin, perlin > value zooms in, simplex < value zooms in
-            if(N_MODE == SIMPLEX && !terrainmode) drawPixel(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,zoom,0,255,n + nx,i + ny) , IMAGE_SCALE);
-            else if(N_MODE == SIMPLEX && terrainmode) drawPixelTerrain(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,zoom,0,255,n + nx,i + ny), IMAGE_SCALE);
-            else if(N_MODE == PERLIN && !terrainmode) drawPixel(mapTexture, n, i, getNoise(octaves, persistence, zoom, n + nx, i + ny), IMAGE_SCALE);
-            else if(N_MODE == PERLIN && terrainmode) drawPixelTerrain(mapTexture, n, i, getNoise(octaves, persistence, zoom, n + nx, i + ny), IMAGE_SCALE);
+            //note , the scale factor for simplex differs from perlin, perlin > value zooms in, simplex < value zooms in
+            if(N_MODE == SIMPLEX && !terrainmode) drawPixel(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,scale,0,255,n+nx,i + ny) , IMAGE_SCALE);
+            else if(N_MODE == SIMPLEX && terrainmode) drawPixelTerrain(mapTexture, n, i, scaled_octave_noise_2d(octaves,persistence,scale,0,255,(n + nx),(i + ny)), IMAGE_SCALE);
+            else if(N_MODE == PERLIN && !terrainmode) drawPixel(mapTexture, n, i, getNoise(octaves, persistence, scale, n + nx, i + ny), IMAGE_SCALE);
+            else if(N_MODE == PERLIN && terrainmode) drawPixelTerrain(mapTexture, n, i, getNoise(octaves, persistence, scale, n + nx, i + ny), IMAGE_SCALE);
         }
     }
+    std::cout << nx << "," << ny << std::endl;
 }
 
 void NoiseGen::drawMap()
@@ -644,20 +651,26 @@ void NoiseGen::drawMask()
 void NoiseGen::drawCoordinates(sf::Vector2i ncoord)
 {
     std::stringstream coordS;
+    std::stringstream coordR;
     std::stringstream coordE;
-    coordS << "[ X:" << xpos << ", Y:" << ypos << " ]";
+    coordR << "RAW [ X:" << xpos << ", Y:" << ypos << " ]";
+    coordS << "SCAL[ X:" << xpos*scale << ", Y:" << ypos*scale << " ]";
     //coordE << "[ X:" << xpos + IMAGE_SIZE - 1 << ", Y:" << ypos + IMAGE_SIZE - 1 << "]";
-    coordE << "[ X:" << xpos*zoom << ", Y:" << ypos*zoom << "]";
+    coordE << "SIZE[ X:" << IMAGE_SIZE*MIN_SCALE*scale << ", Y:" << IMAGE_SIZE*MIN_SCALE*scale << "]";
 
 
     sf::Text coordt(coordS.str(), font, 12);
     coordt.setPosition( ncoord.x, ncoord.y);
+
+    sf::Text coord3(coordR.str(), font, 12);
+    coord3.setPosition( ncoord.x, ncoord.y-14);
 
     sf::Text coordt2(coordE.str(), font, 12);
     coordt2.setPosition( ncoord.x, ncoord.y+14);
 
     screen->draw(coordt);
     screen->draw(coordt2);
+    screen->draw(coord3);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -676,11 +689,11 @@ void NoiseGen::initSliders()
     nslider->setRealtime(true);
     sliders.push_back(nslider);
 
-    //zoom slider
+    //scale slider
     //1
-    nslider = new Slider(screen, 0, 0.015, 100, &zoom);
+    nslider = new Slider(screen, MIN_SCALE, MAX_SCALE, 100, &scale);
     nslider->setCenter( sf::Vector2f(IMAGE_SCALE*IMAGE_SIZE + RIGHT_MARGIN_WIDTH/2,65));
-    nslider->setName("ZOOM");
+    nslider->setName("SCALE");
     nslider->setRealtime(true);
     sliders.push_back(nslider);
 
@@ -730,7 +743,7 @@ bool NoiseGen::updateSliders(sf::Event *event)
         if(sliders[i]->update(event))
         {
             need_update = true;
-            //if zoom has changed, recalc position
+            //if scale has changed, recalc position
             if(i == 1)
             {
 

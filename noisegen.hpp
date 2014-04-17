@@ -23,7 +23,8 @@
 #define RIGHT_MARGIN_WIDTH 150
 #define BOTTOM_MARGIN_HEIGHT 100
 
-
+#define MIN_SCALE 1
+#define MAX_SCALE 10
 
 enum {SIMPLEX, PERLIN};
 
@@ -49,7 +50,7 @@ private:
 
     //camera/gen controls
     float persistence;
-    float zoom;
+    float scale;
     float octaves;
     int xpos;
     int ypos;
